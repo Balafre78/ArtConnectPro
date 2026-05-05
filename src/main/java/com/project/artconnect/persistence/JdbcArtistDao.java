@@ -5,14 +5,23 @@ import com.project.artconnect.model.Artist;
 import com.project.artconnect.util.ConnectionManager;
 
 import java.sql.*;
+import java.util.IdentityHashMap;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JDBC implementation for ArtistDao.
  * TODO: Students must implement this using JDBC and SQL.
  */
 public class JdbcArtistDao implements ArtistDao {
+
+    private static final Map<Artist, String> artistToIdMap = new IdentityHashMap<>();
+
+    public static String getIdForArtist(Artist artist) {
+        return artistToIdMap.get(artist);
+    }
 
     @Override
     public List<Artist> findAll(){
@@ -22,13 +31,15 @@ public class JdbcArtistDao implements ArtistDao {
              ResultSet rs = ps.executeQuery()) {
             List<Artist> liste = new ArrayList<>();
             while (rs.next()) {
-                liste.add(new Artist(
+                Artist a = new Artist(
                         rs.getString("name"),
                         rs.getString("bio"),
-                        rs.getInt("birthYear"),
+                        rs.getDate("birthYear").toLocalDate().getYear(),
                         rs.getString("contactEmail"),
                         rs.getString("city")
-                ));
+                );
+                artistToIdMap.put(a, rs.getString("id"));
+                liste.add(a);
             }
             return liste;
         }  catch (SQLException e) {
@@ -38,15 +49,20 @@ public class JdbcArtistDao implements ArtistDao {
 
     @Override
     public void save(Artist artist) {
-        String sql = "INSERT INTO ARTISTS (name, bio, birthYear, contactEmail, city, isActive) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO ARTISTS (id, name, bio, birthYear, contactEmail, phone, city, isActive) VALUES (?, ?, ?, ?, ?, ?)";
+
+        String newId = UUID.randomUUID().toString();
+
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);) {
-            ps.setString(1, artist.getName());
-            ps.setString(2, artist.getBio());
-            ps.setInt(3, artist.getBirthYear());
-            ps.setString(4, artist.getContactEmail());
-            ps.setString(5, artist.getCity());
-            ps.setBoolean(6, artist.isActive());
+            ps.setString(1, newId);
+            ps.setString(2, artist.getName());
+            ps.setString(3, artist.getBio());
+            ps.setInt(4, artist.getBirthYear());
+            ps.setString(5, artist.getContactEmail());
+            ps.setString(6, artist.getPhone());
+            ps.setString(7, artist.getCity());
+            ps.setBoolean(8, artist.isActive());
 
             ps.executeUpdate();
 
@@ -58,18 +74,18 @@ public class JdbcArtistDao implements ArtistDao {
 
     @Override
     public void update(Artist artist) {
-        // TODO: Implement UPDATE artist SET ... WHERE name = ?
-        String sql = "UPDATE ARTISTS SET bio = ?, birthYear = ?, contactEmail = ?, city = ?, isActive = ? WHERE name = ?";
+        String id = artistToIdMap.get(artist);
+        String sql = "UPDATE ARTISTS SET name = ?, bio = ?, birthYear = ?, contactEmail = ?, city = ? WHERE id = ?";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, artist.getBio());
-            ps.setInt(2, artist.getBirthYear());
-            ps.setString(3, artist.getContactEmail());
-            ps.setString(4, artist.getCity());
-            ps.setBoolean(5, artist.isActive());
-            ps.setString(6, artist.getName());
+            ps.setString(1, artist.getName());
+            ps.setString(2, artist.getBio());
+            ps.setInt(3, artist.getBirthYear());
+            ps.setString(4, artist.getContactEmail());
+            ps.setString(5, artist.getCity());
+            ps.setString(6, id);
 
             ps.executeUpdate();
 
@@ -80,14 +96,17 @@ public class JdbcArtistDao implements ArtistDao {
 
     @Override
     public void delete(String artistName) {
-        // TODO: Implement DELETE FROM artist WHERE name = ?
         String sql = "DELETE FROM ARTISTS WHERE name = ?";
 
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, artistName);
-            ps.executeUpdate();
+            int nbAffectedRows = ps.executeUpdate();
+
+            if (nbAffectedRows > 0) {
+                artistToIdMap.keySet().removeIf(artist -> artist.getName().equals(artistName));
+            }
 
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la suppression de l'artiste", e);
