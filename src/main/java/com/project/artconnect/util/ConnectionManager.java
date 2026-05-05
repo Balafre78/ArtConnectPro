@@ -1,6 +1,7 @@
 package com.project.artconnect.util;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 
 /**
@@ -8,6 +9,10 @@ import java.sql.SQLException;
  * TODO: Students must implementation the getConnection logic.
  */
 public class ConnectionManager {
+
+    private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/artconnect";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "";
 
     /**
      * Provides a connection to the MySQL database.
@@ -17,8 +22,7 @@ public class ConnectionManager {
      */
     public static Connection getConnection() throws SQLException {
         // TODO: Students should implement this using DatabaseConfig properties
-        // return DriverManager.getConnection(DatabaseConfig.URL, DatabaseConfig.USER,
-        // DatabaseConfig.PASSWORD);
-        throw new UnsupportedOperationException("Database connection logic not yet implemented.");
+        return DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        //throw new UnsupportedOperationException("Database connection logic not yet implemented.");
     }
 }
