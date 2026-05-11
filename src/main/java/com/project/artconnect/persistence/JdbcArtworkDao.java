@@ -1,5 +1,6 @@
 package com.project.artconnect.persistence;
 
+import static com.project.artconnect.persistence.JdbcArtistDao.getIdForArtist;
 import com.project.artconnect.dao.ArtworkDao;
 import com.project.artconnect.model.Artist;
 import com.project.artconnect.model.Artwork;
@@ -8,6 +9,7 @@ import com.project.artconnect.util.ConnectionManager;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JDBC implementation of ArtworkDao.
@@ -86,6 +88,29 @@ public class JdbcArtworkDao implements ArtworkDao {
             ps.setString(6, artwork.getType());
             ps.setString(7, artwork.getMedium());
             ps.executeUpdate();
+          
+          /*
+                  String sqlCreates = "INSERT INTO Creates (id_artist, id_artwork) VALUES (?, ?)";
+        String newArtworkId = UUID.randomUUID().toString();
+
+        try {
+            // 2.insertion dans Creates
+            try (PreparedStatement psLink = conn.prepareStatement(sqlCreates)) {
+                String artistId = JdbcArtistDao.getIdForArtist(artwork.getArtist());
+
+                if (artistId == null) {
+                    throw new SQLException("Lien impossible : L'id de l'artiste est introuvable dans le registre.");
+                }
+                psLink.setString(1, artistId);
+                psLink.setString(2, newArtworkId);
+                psLink.executeUpdate();
+            }
+
+            conn.commit();
+            objectToIdMap.put(artwork, newArtworkId);
+            conn.setAutoCommit(true);
+            conn.close();
+            */
         } catch (SQLException e) {
             throw new RuntimeException("Erreur save artwork: " + artwork.getTitle(), e);
         }

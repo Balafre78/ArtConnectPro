@@ -7,13 +7,13 @@ import com.project.artconnect.util.ConnectionManager;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * JDBC implementation of ArtistDao.
  * Table: Artist(id_artist, name, bio, birth_year, contact_email, phone, city)
  */
 public class JdbcArtistDao implements ArtistDao {
-
     private static final String SQL_FIND_ALL =
             "SELECT id_artist, name, bio, birth_year, contact_email, phone, city FROM Artist";
 
@@ -29,7 +29,6 @@ public class JdbcArtistDao implements ArtistDao {
 
     private static final String SQL_FIND_BY_CITY =
             "SELECT id_artist, name, bio, birth_year, contact_email, phone, city FROM Artist WHERE city=?";
-
     private Artist mapRow(ResultSet rs) throws SQLException {
         Artist artist = new Artist();
         artist.setName(rs.getString("name"));
