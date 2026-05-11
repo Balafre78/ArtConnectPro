@@ -4,23 +4,19 @@ import com.project.artconnect.service.*;
 import com.project.artconnect.service.impl.*;
 
 /**
- * Service Provider to manage singleton instances of services and handle their
- * initialization.
+ * Service Provider — utilise maintenant les services JDBC connectés à MySQL.
+ * Pour revenir aux données en mémoire (tests), remplacer JdbcXxx par InMemoryXxx
+ * et remettre le bloc static avec initData().
  */
 public class ServiceProvider {
-    private static final InMemoryArtistService artistService = new InMemoryArtistService();
-    private static final InMemoryArtworkService artworkService = new InMemoryArtworkService();
-    private static final InMemoryGalleryService galleryService = new InMemoryGalleryService();
-    private static final InMemoryWorkshopService workshopService = new InMemoryWorkshopService();
-    private static final InMemoryCommunityService communityService = new InMemoryCommunityService();
 
-    static {
-        // Initialize services with their dependencies
-        artworkService.initData(artistService);
-        galleryService.initData(artworkService);
-        workshopService.initData(artistService);
-        communityService.initData(artworkService);
-    }
+    private static final JdbcArtistService artistService = new JdbcArtistService();
+    private static final JdbcArtworkService artworkService = new JdbcArtworkService();
+    private static final JdbcGalleryService galleryService = new JdbcGalleryService();
+    private static final JdbcWorkshopService workshopService = new JdbcWorkshopService();
+    private static final JdbcCommunityService communityService = new JdbcCommunityService();
+
+    // Plus besoin de initData() — les données viennent directement de MySQL
 
     public static ArtistService getArtistService() {
         return artistService;
