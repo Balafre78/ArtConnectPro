@@ -1,5 +1,10 @@
 # ArtConnect Pro - Local Art Community Platform
 
+----
+**Github [link](https://github.com/Balafre78/ArtConnectPro)**
+
+---
+
 ## Overview
 ArtConnect Pro is a JavaFX-based management system for local art communities. It allows managing artists, artworks, exhibitions, galleries, workshops, and community members.
 
