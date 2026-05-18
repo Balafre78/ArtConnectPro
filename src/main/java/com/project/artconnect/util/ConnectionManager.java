@@ -12,7 +12,7 @@ public class ConnectionManager {
 
     private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/artconnect";
     private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "";
+    private static final String DB_PASSWORD = "Clementine1Mysql!";
 
     /**
      * Provides a connection to the MySQL database.
