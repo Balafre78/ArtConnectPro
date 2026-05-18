@@ -19,17 +19,17 @@ public class JdbcWorkshopDao implements WorkshopDao {
     private static final String SQL_FIND_ALL =
             "SELECT w.id_workshop, w.title, w.level, w.description, w.date, w.duration_minutes, w.max_participants, w.price, w.location, ar.name as instructor_name " +
                     "FROM Workshop w " +
-                    "JOIN Artist ar ON w.id_curator = ar.id_artist";
+                    "JOIN Artist ar ON w.id_instructor = ar.id_artist";
 
     private static final String SQL_SAVE =
-            "INSERT INTO Workshop (id_workshop, title, level, description, date, duration_minutes, max_participants, price, location, id_curator) " +
+            "INSERT INTO Workshop (id_workshop, title, level, description, date, duration_minutes, max_participants, price, location, id_instructor) " +
                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String SQL_DELETE =
             "DELETE FROM Workshop WHERE id_workshop = ?";
 
     private static final String SQL_UPDATE =
-            "UPDATE Workshop SET title = ?, level = ?, description = ?, date = ?, duration_minutes = ?, max_participants = ?, price = ?, location = ?, id_curator = ? where id_workshop = ?";
+            "UPDATE Workshop SET title = ?, level = ?, description = ?, date = ?, duration_minutes = ?, max_participants = ?, price = ?, location = ?, id_instructor = ? where id_workshop = ?";
 
     private static final Map<Workshop, String> workshopToIdMap = new HashMap<>();
     private static final JdbcArtistDao jdbcArtistDao = new JdbcArtistDao();
@@ -40,12 +40,11 @@ public class JdbcWorkshopDao implements WorkshopDao {
         try (Connection conn = ConnectionManager.getConnection();
              PreparedStatement ps = conn.prepareStatement(SQL_FIND_ALL);
              ResultSet rs = ps.executeQuery()) {
-            System.out.println("11111");
             while (rs.next()) {
                 Artist instructor = jdbcArtistDao.findByName(rs.getString("instructor_name"));
                 Workshop workshop = new Workshop(
                         rs.getString("title"),
-                        rs.getDate("date").toLocalDate().atStartOfDay(), // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        rs.getDate("date").toLocalDate().atStartOfDay(),
                         instructor,
                         rs.getDouble("price")
                 );

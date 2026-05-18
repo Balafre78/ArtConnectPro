@@ -66,4 +66,8 @@ public class JdbcArtworkTagDao implements ArtworkTagDao {
         }
         return list;
     }
+
+    public String findId(ArtworkTag tag) {
+        return artworkToIdMap.get(tag);
+    }
 }

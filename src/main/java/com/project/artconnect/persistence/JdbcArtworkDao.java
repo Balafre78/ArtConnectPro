@@ -33,14 +33,9 @@ public class JdbcArtworkDao implements ArtworkDao {
             "SELECT * FROM ArtworkArtist " +
             "WHERE artist_name = ?";
 
-    private static final String SQL_FIND_TAGS =
-            "SELECT t.name_tag FROM ArtworkTag t " +
-            "JOIN Has h ON t.id_artwork_tag = h.id_artwork_tag " +
-            "JOIN Artwork a ON h.id_artwork = a.id_artwork " +
-            "WHERE h.id_artwork = ?";
-
     private static final Map<Artwork, String> artworkToIdMap = new HashMap<>();
     private static final JdbcArtistDao jdbcArtistDao = new JdbcArtistDao();
+    private static final JdbcArtworkTagDao jdbcArtworkTagDao = new JdbcArtworkTagDao();
 
     @Override
     public List<Artwork> findAll() {
@@ -61,16 +56,17 @@ public class JdbcArtworkDao implements ArtworkDao {
                 );
                 artwork.setDescription(rs.getString("description"));
                 artwork.setMedium(rs.getString("medium"));
+
                 String s = rs.getString("status");
                 artwork.setStatus(Artwork.Status.valueOf(s));
 
-                // Trouver les tags
+                // Tags
                 List<ArtworkTag> tags = new ArrayList<>();
-                try (PreparedStatement ps2 = conn.prepareStatement(SQL_FIND_TAGS)) {
-                    ps2.setString(1, rs.getString("id_artwork"));
-                    ResultSet rs2 = ps2.executeQuery();
-                    while (rs2.next()) {
-                        tags.add(new ArtworkTag(rs2.getString("name_tag")));
+                String tagsString = rs.getString("tags");
+                if (tagsString != null && !tagsString.isEmpty()) {
+                    String[] splitTags = tagsString.split(",");
+                    for (String tagName : splitTags) {
+                        tags.add(new ArtworkTag(tagName.trim()));
                     }
                 }
                 artwork.setTags(tags);
@@ -78,9 +74,11 @@ public class JdbcArtworkDao implements ArtworkDao {
                 artworkToIdMap.put(artwork, rs.getString("id_artwork"));
                 artworks.add(artwork);
             }
+
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findAll artworks", e);
         }
+
         return artworks;
     }
 
@@ -98,8 +96,17 @@ public class JdbcArtworkDao implements ArtworkDao {
             ps.setString(7, artwork.getMedium());
             ps.setString(8, artwork.getStatus().toString());
             ps.setString(9, jdbcArtistDao.findId(artwork.getArtist()));
-
             ps.executeUpdate();
+
+            try (PreparedStatement ps2 = conn.prepareStatement("INSERT INTO Has (id_artwork, id_artwork_tag) VALUES (?, ?)")) {
+                for (ArtworkTag tag : artwork.getTags()) {
+                    ps2.setString(1, id);
+                    ps2.setString(2, jdbcArtworkTagDao.findId(tag));
+                    ps2.addBatch();
+                }
+                ps2.executeBatch();
+            }
+
             artworkToIdMap.put(artwork, id);
 
         } catch (SQLException e) {
@@ -134,13 +141,17 @@ public class JdbcArtworkDao implements ArtworkDao {
     public void delete(Artwork artwork) {
         String idToRemove = artworkToIdMap.get(artwork);
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(SQL_DELETE)) {
+             PreparedStatement ps2 = conn.prepareStatement("DELETE FROM Has WHERE id_artwork = ?")) {
+            ps2.setString(1, idToRemove);
+            ps2.executeUpdate();
+            try (PreparedStatement ps = conn.prepareStatement(SQL_DELETE)) {
                 ps.setString(1, idToRemove);
                 ps.executeUpdate();
                 if (idToRemove != null) {
                     final String id = idToRemove;
                     artworkToIdMap.entrySet().removeIf(e -> e.getValue().equals(id));
                 }
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la suppression", e);
         }
@@ -169,6 +180,7 @@ public class JdbcArtworkDao implements ArtworkDao {
                     artwork.setMedium(rs.getString("medium"));
                     String s = rs.getString("status");
                     artwork.setStatus(Artwork.Status.valueOf(s));
+                    artwork.setTags(List.of());
 
                     results.add(artwork);
                     artworkToIdMap.put(artwork, rs.getString("id_artwork"));

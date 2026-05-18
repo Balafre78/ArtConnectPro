@@ -30,4 +30,11 @@ public class JdbcCommunityService implements CommunityService {
         if (member == null) return List.of();
         return member.getReviews();
     }
+
+    @Override
+    public List<CommunityMember> searchMembers(String query) {
+        return communityMemberDao.findAll().stream()
+                .filter(m -> m.getName().toLowerCase().contains(query.toLowerCase()))
+                .collect(java.util.stream.Collectors.toList());
+    }
 }

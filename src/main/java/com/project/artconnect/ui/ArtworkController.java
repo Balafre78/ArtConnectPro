@@ -82,7 +82,7 @@ public class ArtworkController {
     private void handleEdit() {
         Artwork selected = artworkTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No selection", "Please select an artist to edit.");
+            showAlert("No selection", "Please select an artist to edit.", true);
             return;
         }
         Dialog<Artwork> dialog = buildArtworkDialog("Edit Artwork", selected);
@@ -97,7 +97,7 @@ public class ArtworkController {
     private void handleDelete() {
         Artwork selected = artworkTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No selection", "Please select an artist to delete.");
+            showAlert("No selection", "Please select an artist to delete.", true);
             return;
         }
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
@@ -133,6 +133,7 @@ public class ArtworkController {
         TextField descriptionField = new TextField();
         ComboBox<String> artistField = new ComboBox<>();
         ComboBox<Artwork.Status> statusField = new ComboBox<>();
+        ComboBox<ArtworkTag> tagField = new ComboBox<>();
 
         titleField.setPromptText("Title");
         creationYearField.setPromptText("Creation Year");
@@ -143,6 +144,7 @@ public class ArtworkController {
         List<String> artistsNames = artistService.getAllArtists().stream().map(Artist::getName).toList();
         artistField.setPromptText("Artist Name"); artistField.setItems(FXCollections.observableArrayList(artistsNames));
         statusField.setPromptText("Status"); statusField.setItems(FXCollections.observableArrayList(Artwork.Status.values()));
+        tagField.setPromptText("Tag"); tagField.setItems(FXCollections.observableArrayList(artworkService.getAllTags()));
 
         // Pré-remplir si mode Edit
         if (artwork != null) {
@@ -156,6 +158,8 @@ public class ArtworkController {
             artistField.setValue(artwork.getArtist() != null ? artwork.getArtist().getName() : "");
             artistField.setDisable(true);
             statusField.setValue(artwork.getStatus());
+            tagField.setValue(artwork.getTags().isEmpty() ? null : artwork.getTags().get(0));
+            tagField.setDisable(true);
         }
 
         grid.add(new Label("Title:"),0,0); grid.add(titleField,1,0);
@@ -166,8 +170,24 @@ public class ArtworkController {
         grid.add(new Label("Description:"),0,5); grid.add(descriptionField,1,5);
         grid.add(new Label("Artist Name:"),0,6); grid.add(artistField,1, 6);
         grid.add(new Label("Status:"),0,7); grid.add(statusField,1, 7);
+        grid.add(new Label("Tag:"),0,8); grid.add(tagField,1, 8);
 
         dialog.getDialogPane().setContent(grid);
+
+        Button saveNode = (Button) dialog.getDialogPane().lookupButton(saveButton);
+        saveNode.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String creationYear = creationYearField.getText().trim();
+            String price = priceField.getText().trim();
+
+            if (!creationYear.matches("\\d+")) {
+                showAlert("Invalid phone", "The phone field must contain digits only.", false);
+                event.consume();
+            }
+            if (!price.matches("\\d+")) {
+                showAlert("Invalid birth year", "The birth year field must contain digits only.", false);
+                event.consume();
+            }
+        });
 
         // Convertir le résultat en objet Artwork
         dialog.setResultConverter(btn -> {
@@ -184,6 +204,7 @@ public class ArtworkController {
                 a.setPrice(Double.parseDouble(priceField.getText()));
                 a.setDescription(descriptionField.getText().trim());
                 a.setStatus(statusField.getValue() != null ? statusField.getValue() : Artwork.Status.FOR_SALE);
+                a.setTags(List.of(tagField.getValue()));
                 Artist artist = artistService.getArtistByName(artistField.getValue());
                 if (artist == null) return null; else a.setArtist(artist);
                 return a;
@@ -198,8 +219,8 @@ public class ArtworkController {
         artworkTable.refresh();
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+    private void showAlert(String title, String message, Boolean isWarning) {
+        Alert alert = isWarning ? new Alert(Alert.AlertType.WARNING) : new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setContentText(message);
         alert.showAndWait();

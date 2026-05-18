@@ -11,4 +11,6 @@ public interface CommunityService {
     Optional<CommunityMember> getMemberByName(String name);
 
     List<Review> getReviewsByMember(CommunityMember member);
+
+    List<CommunityMember> searchMembers(String query);
 }

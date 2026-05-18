@@ -191,7 +191,6 @@ public class JdbcArtistDao implements ArtistDao {
 
     @Override
     public String findId(Artist artist) {
-        System.out.println("-> " + artistToIdMap.get(artist));
         return artistToIdMap.get(artist);
     }
 

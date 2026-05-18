@@ -70,7 +70,7 @@ public class ArtistController {
     private void handleEdit() {
         Artist selected = artistTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No selection", "Please select an artist to edit.");
+            showAlert("No selection", "Please select an artist to edit.", true);
             return;
         }
         Dialog<Artist> dialog = buildArtistDialog("Edit Artist", selected);
@@ -85,7 +85,7 @@ public class ArtistController {
     private void handleDelete() {
         Artist selected = artistTable.getSelectionModel().getSelectedItem();
         if (selected == null) {
-            showAlert("No selection", "Please select an artist to delete.");
+            showAlert("No selection", "Please select an artist to delete.", true);
             return;
         }
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION,
@@ -105,8 +105,8 @@ public class ArtistController {
         artistTable.refresh();
     }
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+    private void showAlert(String title, String message, Boolean isWarning) {
+        Alert alert = isWarning ? new Alert(Alert.AlertType.WARNING) : new Alert(Alert.AlertType.ERROR);
         alert.setTitle(title);
         alert.setContentText(message);
         alert.showAndWait();
@@ -163,17 +163,28 @@ public class ArtistController {
 
         dialog.getDialogPane().setContent(grid);
 
+        Button saveNode = (Button) dialog.getDialogPane().lookupButton(saveButton);
+        saveNode.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            String phone = phoneField.getText().trim();
+            String birthYear = birthYearField.getText().trim();
+
+            if (!phone.matches("\\d+")) {
+                showAlert("Invalid phone", "The phone field must contain digits only.", false);
+                event.consume();
+            }
+            if (!birthYear.matches("\\d+")) {
+                showAlert("Invalid birth year", "The birth year field must contain digits only.", false);
+                event.consume();
+            }
+        });
+
         // Convertir le résultat en objet Artist
         dialog.setResultConverter(btn -> {
             if (btn == saveButton) {
                 Artist a = (artist != null) ? artist : new Artist();
                 a.setName(nameField.getText().trim());
                 a.setBio(bioField.getText().trim());
-                try {
-                    a.setBirthYear(Integer.parseInt(birthYearField.getText().trim()));
-                } catch (NumberFormatException e) {
-                    a.setBirthYear(0);
-                }
+                a.setBirthYear(Integer.parseInt(birthYearField.getText().trim()));
                 a.setContactEmail(emailField.getText().trim());
                 a.setPhone(phoneField.getText().trim());
                 a.setCity(cityField.getText().trim());
