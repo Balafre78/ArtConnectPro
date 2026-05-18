@@ -10,5 +10,7 @@ public interface ExhibitionDao {
 
     void update(Exhibition exhibition);
 
-    void delete(String title);
+    void delete(Exhibition exhibition);
+
+    List<String> findAllThemes();
 }

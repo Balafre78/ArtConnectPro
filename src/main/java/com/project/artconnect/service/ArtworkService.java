@@ -2,6 +2,8 @@ package com.project.artconnect.service;
 
 import com.project.artconnect.model.Artwork;
 import com.project.artconnect.model.Artist;
+import com.project.artconnect.model.ArtworkTag;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -16,5 +18,9 @@ public interface ArtworkService {
 
     void updateArtwork(Artwork artwork);
 
-    void deleteArtwork(String title);
+    void deleteArtwork(Artwork artwork);
+
+    List<ArtworkTag> getAllTags();
+
+    List<Artwork> searchArtwork(String query, String tagName);
 }

@@ -5,7 +5,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface GalleryDao {
-    Optional<Gallery> findById(Long id);
+    Gallery findByName(String name);
+
+    String findIdByName(String Name);
 
     List<Gallery> findAll();
 }

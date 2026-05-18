@@ -3,6 +3,7 @@ package com.project.artconnect.model;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Exhibition {
     private String title;
@@ -91,5 +92,27 @@ public class Exhibition {
     @Override
     public String toString() {
         return title;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Exhibition that)) {
+            return false;
+        }
+        return Objects.equals(title, that.title)
+                && Objects.equals(startDate, that.startDate)
+                && Objects.equals(endDate, that.endDate)
+                && gallery.equals(that.gallery)
+                && Objects.equals(description, that.description)
+                && Objects.equals(curatorName, that.curatorName)
+                && Objects.equals(theme, that.theme);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(title, startDate, endDate, gallery, description, curatorName, theme);
     }
 }

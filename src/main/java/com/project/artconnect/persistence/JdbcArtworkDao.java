@@ -1,58 +1,81 @@
 package com.project.artconnect.persistence;
 
-import static com.project.artconnect.persistence.JdbcArtistDao.getIdForArtist;
+import com.project.artconnect.dao.ArtistDao;
 import com.project.artconnect.dao.ArtworkDao;
+import com.project.artconnect.dao.ArtworkTagDao;
 import com.project.artconnect.model.Artist;
 import com.project.artconnect.model.Artwork;
+import com.project.artconnect.model.ArtworkTag;
+import com.project.artconnect.model.Discipline;
 import com.project.artconnect.util.ConnectionManager;
 
-
 import java.sql.*;
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * JDBC implementation for ArtworkDao.
  */
 public class JdbcArtworkDao implements ArtworkDao {
+    private static final String SQL_FIND_ALL =
+            "SELECT * FROM ArtworkArtist";
 
-    // Lier l'instance d'objet à son id dans la base
-    private static final Map<Artwork, String> objectToIdMap = new IdentityHashMap<>();
+    private static final String SQL_SAVE_ARTWORK =
+            "INSERT INTO Artwork (id_artwork, title, price, creation_year, description, type, medium, status, id_artist) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    private static final String SQL_UPDATE =
+            "UPDATE Artwork SET price = ?, creation_year = ?, description = ?, type = ?, medium = ?, status = ? WHERE title = ?";
+
+    private static final String SQL_DELETE =
+            "DELETE FROM Artwork WHERE id_artwork=?";
+
+    private static final String SQL_FIND_BY_ARTIST =
+            "SELECT * FROM ArtworkArtist " +
+            "WHERE artist_name = ?";
+
+    private static final String SQL_FIND_TAGS =
+            "SELECT t.name_tag FROM ArtworkTag t " +
+            "JOIN Has h ON t.id_artwork_tag = h.id_artwork_tag " +
+            "JOIN Artwork a ON h.id_artwork = a.id_artwork " +
+            "WHERE h.id_artwork = ?";
+
+    private static final Map<Artwork, String> artworkToIdMap = new HashMap<>();
+    private static final JdbcArtistDao jdbcArtistDao = new JdbcArtistDao();
 
     @Override
     public List<Artwork> findAll() {
-        String sql = "SELECT aw.*, ar.name as artist_name, ar.bio as artist_bio, ar.birthYear as artist_birth, ar.contactEmail as artist_email, ar.city as artist_city FROM Artwork aw JOIN ARTISTS ar ON aw.artist_id = ar.id";
-
         List<Artwork> artworks = new ArrayList<>();
 
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+             PreparedStatement ps = conn.prepareStatement(SQL_FIND_ALL);
              ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
-                Artist artist = new Artist(
-                        rs.getString("artist_name"),
-                        rs.getString("artist_bio"),
-                        rs.getInt("artist_birth"),
-                        rs.getString("artist_email"),
-                        rs.getString("artist_city")
-                );
-
+                Artist artist = jdbcArtistDao.findByName(rs.getString("artist_name"));
                 Artwork artwork = new Artwork(
                         rs.getString("title"),
-                        rs.getInt("creation_year"),
+                        rs.getDate("creation_year").toLocalDate().getYear(),
                         rs.getString("type"),
                         rs.getDouble("price"),
                         artist
                 );
                 artwork.setDescription(rs.getString("description"));
                 artwork.setMedium(rs.getString("medium"));
+                String s = rs.getString("status");
+                artwork.setStatus(Artwork.Status.valueOf(s));
 
-                objectToIdMap.put(artwork, rs.getString("id_artwork"));
+                // Trouver les tags
+                List<ArtworkTag> tags = new ArrayList<>();
+                try (PreparedStatement ps2 = conn.prepareStatement(SQL_FIND_TAGS)) {
+                    ps2.setString(1, rs.getString("id_artwork"));
+                    ResultSet rs2 = ps2.executeQuery();
+                    while (rs2.next()) {
+                        tags.add(new ArtworkTag(rs2.getString("name_tag")));
+                    }
+                }
+                artwork.setTags(tags);
 
+                artworkToIdMap.put(artwork, rs.getString("id_artwork"));
                 artworks.add(artwork);
             }
         } catch (SQLException e) {
@@ -63,105 +86,61 @@ public class JdbcArtworkDao implements ArtworkDao {
 
     @Override
     public void save(Artwork artwork) {
-        String sqlArtwork = "INSERT INTO Artwork (id_artwork, title, price, creation_year, description, type, medium, artist_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-        String sqlCreates = "INSERT INTO Creates (id_artist, id_artwork) VALUES (?, ?)";
+        String id = "W_" + artwork.getTitle().replaceAll("\\s+", "_");
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_SAVE_ARTWORK)) {
+            ps.setString(1, id);
+            ps.setString(2, artwork.getTitle());
+            ps.setDouble(3, artwork.getPrice());
+            ps.setDate(4, Date.valueOf(artwork.getCreationYear() + "-01-01"));
+            ps.setString(5, artwork.getDescription());
+            ps.setString(6, artwork.getType());
+            ps.setString(7, artwork.getMedium());
+            ps.setString(8, artwork.getStatus().toString());
+            ps.setString(9, jdbcArtistDao.findId(artwork.getArtist()));
 
-        String newArtworkId = UUID.randomUUID().toString();
-
-        try {
-            Connection conn = ConnectionManager.getConnection();
-            conn.setAutoCommit(false);
-
-            // 1. insertion dans Artworks
-            try (PreparedStatement psArt = conn.prepareStatement(sqlArtwork)) {
-                psArt.setString(1, newArtworkId);
-                psArt.setString(2, artwork.getTitle());
-                psArt.setDouble(3, artwork.getPrice());
-                // Conversion Integer -> Date SQL (si ta colonne est DATE)
-                psArt.setDate(4, Date.valueOf(artwork.getCreationYear() + "-01-01"));
-                psArt.setString(5, artwork.getDescription());
-                psArt.setString(6, artwork.getType());
-                psArt.setString(7, artwork.getMedium());
-                psArt.executeUpdate();
-            }
-            // 2.insertion dans Creates
-            try (PreparedStatement psLink = conn.prepareStatement(sqlCreates)) {
-                String artistId = JdbcArtistDao.getIdForArtist(artwork.getArtist());
-
-                if (artistId == null) {
-                    throw new SQLException("Lien impossible : L'id de l'artiste est introuvable dans le registre.");
-                }
-                psLink.setString(1, artistId);
-                psLink.setString(2, newArtworkId);
-                psLink.executeUpdate();
-            }
-
-            conn.commit();
-            objectToIdMap.put(artwork, newArtworkId);
-            conn.setAutoCommit(true);
-            conn.close();
+            ps.executeUpdate();
+            artworkToIdMap.put(artwork, id);
 
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur save", e);
+            throw new RuntimeException("Erreur save artwork", e);
         }
     }
 
     @Override
     public void update(Artwork artwork) {
-        String id = objectToIdMap.get(artwork);
+        String id = artwork.getTitle();
         if (id == null) {
-            throw new IllegalStateException("L'oeuvre introuvable.");
+            throw new IllegalStateException("L'oeuvre est introuvable.");
         }
-
-        String sql = "UPDATE Artwork SET title = ?, price = ?, creation_year = ?, description = ?, type = ?, medium = ? WHERE id_artwork = ?";
-
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(SQL_UPDATE)) {
 
-            ps.setString(1, artwork.getTitle());
-            ps.setDouble(2, artwork.getPrice());
-            ps.setDate(3, java.sql.Date.valueOf(artwork.getCreationYear() + "-01-01"));
-            ps.setString(4, artwork.getDescription());
-            ps.setString(5, artwork.getType());
-            ps.setString(6, artwork.getMedium());
+            ps.setDouble(1, artwork.getPrice());
+            ps.setDate(2, java.sql.Date.valueOf(artwork.getCreationYear() + "-01-01"));
+            ps.setString(3, artwork.getDescription());
+            ps.setString(4, artwork.getType());
+            ps.setString(5, artwork.getMedium());
+            ps.setString(6, artwork.getStatus().toString());
             ps.setString(7, id);
 
             ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Erreur lors de l'update de l'artwork", e);
+            throw new RuntimeException("Erreur lors de l'update de l'artwork "+artwork.getTitle(), e);
         }
     }
 
     @Override
-    public void delete(String title) {
-        String idToRemove = null;
-        for (Map.Entry<Artwork, String> entry : objectToIdMap.entrySet()) {
-            if (entry.getKey().getTitle().equals(title)) {
-                idToRemove = entry.getValue();
-                break;
-            }
-        }
-
-        // 2. Supprimer en cascade (si ta DB n'a pas ON DELETE CASCADE)
-        String sqlLink = "DELETE FROM Creates WHERE id_artwork = (SELECT id_artwork FROM Artwork WHERE title = ?)";
-
-        try (Connection conn = ConnectionManager.getConnection()) {
-            conn.setAutoCommit(false);
-            try (PreparedStatement ps1 = conn.prepareStatement(sqlLink)) {
-
-                ps1.setString(1, title);
-                ps1.executeUpdate();
-
-                conn.commit();
-
+    public void delete(Artwork artwork) {
+        String idToRemove = artworkToIdMap.get(artwork);
+        try (Connection conn = ConnectionManager.getConnection();
+             PreparedStatement ps = conn.prepareStatement(SQL_DELETE)) {
+                ps.setString(1, idToRemove);
+                ps.executeUpdate();
                 if (idToRemove != null) {
-                    String finalId = idToRemove;
-                    objectToIdMap.entrySet().removeIf(e -> e.getValue().equals(finalId));
+                    final String id = idToRemove;
+                    artworkToIdMap.entrySet().removeIf(e -> e.getValue().equals(id));
                 }
-            } catch (SQLException e) {
-                conn.rollback();
-                throw e;
-            }
         } catch (SQLException e) {
             throw new RuntimeException("Erreur lors de la suppression", e);
         }
@@ -170,22 +149,15 @@ public class JdbcArtworkDao implements ArtworkDao {
     @Override
     public List<Artwork> findByArtistName(String artistName) {
         List<Artwork> results = new ArrayList<>();
-        String sql = "SELECT a.*, r.* FROM Artwork a JOIN Creates c ON a.id_artwork = c.id_artwork JOIN Artist r ON c.id_artist = r.id_artist WHERE r.name = ?";
         try (Connection conn = ConnectionManager.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(SQL_FIND_BY_ARTIST)) {
 
             ps.setString(1, artistName);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    Artist artist = new Artist(
-                            rs.getString("name"),
-                            rs.getString("bio"),
-                            rs.getInt("birthYear"),
-                            rs.getString("contactEmail"),
-                            rs.getString("city")
-                    );
 
+                    Artist artist = jdbcArtistDao.findByName(rs.getString("artist_name"));
                     Artwork artwork = new Artwork(
                             rs.getString("title"),
                             rs.getDate("creation_year").toLocalDate().getYear(),
@@ -195,15 +167,20 @@ public class JdbcArtworkDao implements ArtworkDao {
                     );
                     artwork.setDescription(rs.getString("description"));
                     artwork.setMedium(rs.getString("medium"));
-
-                    objectToIdMap.put(artwork, rs.getString("id_artwork"));
+                    String s = rs.getString("status");
+                    artwork.setStatus(Artwork.Status.valueOf(s));
 
                     results.add(artwork);
+                    artworkToIdMap.put(artwork, rs.getString("id_artwork"));
                 }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Erreur findByArtistName", e);
         }
         return results;
+    }
+
+    public String findId(Artwork artwork) {
+        return artworkToIdMap.get(artwork);
     }
 }

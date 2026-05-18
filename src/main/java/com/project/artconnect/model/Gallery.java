@@ -2,6 +2,7 @@ package com.project.artconnect.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Gallery {
     private String name;
@@ -96,5 +97,22 @@ public class Gallery {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Gallery gallery)) {
+            return false;
+        }
+        return Objects.equals(name, gallery.name)
+                && Objects.equals(address, gallery.address);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, address);
     }
 }

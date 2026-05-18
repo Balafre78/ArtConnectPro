@@ -8,13 +8,27 @@
     <padding>
         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
     </padding>
+    <HBox spacing="10.0" alignment="CENTER_LEFT">
+        <TextField fx:id="searchField" promptText="Search workshops..." HBox.hgrow="ALWAYS" />
+        <ComboBox fx:id="difficultyFilter" promptText="Filter by difficulty" />
+        <Button text="Search" onAction="#handleSearch" />
+        <Button text="Reset" onAction="#handleReset" />
+    </HBox>
     <TableView fx:id="workshopTable" VBox.vgrow="ALWAYS">
         <columns>
             <TableColumn fx:id="titleColumn" text="Title" prefWidth="200" />
             <TableColumn fx:id="instructorColumn" text="Instructor" prefWidth="150" />
             <TableColumn fx:id="dateColumn" text="Date" prefWidth="150" />
-            <TableColumn fx:id="priceColumn" text="Price" prefWidth="80" />
+            <TableColumn fx:id="durationColumn" text="Duration Time" prefWidth="150" />
+            <TableColumn fx:id="maxParticipantsColumn" text="Max Participants" prefWidth="150" />
+            <TableColumn fx:id="priceColumn" text="Price" />
             <TableColumn fx:id="levelColumn" text="Level" prefWidth="100" />
+            <TableColumn fx:id="locationColumn" text="Location" prefWidth="100" />
         </columns>
     </TableView>
+    <HBox spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Add Workshop" onAction="#handleAdd" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
+        <Button text="Edit Workshop" onAction="#handleEdit" style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
+        <Button text="Delete Workshop" onAction="#handleDelete" style="-fx-background-color: #f44336; -fx-text-fill: white;" />
+    </HBox>
 </VBox>

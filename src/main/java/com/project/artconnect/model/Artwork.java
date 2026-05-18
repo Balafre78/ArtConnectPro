@@ -2,6 +2,7 @@ package com.project.artconnect.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Artwork entity representing a piece created by an artist.
@@ -118,5 +119,28 @@ public class Artwork {
     @Override
     public String toString() {
         return title;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Artwork artwork)) {
+            return false;
+        }
+        return Objects.equals(title, artwork.title)
+                && Objects.equals(creationYear, artwork.creationYear)
+                && Objects.equals(artist, artwork.artist)
+                && Objects.equals(type, artwork.type)
+                && Objects.equals(medium, artwork.medium)
+                && Objects.equals(description, artwork.description)
+                && Objects.equals(price, artwork.price)
+                && status == artwork.status;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(title, creationYear, artist, type, medium, description, price, status);
     }
 }

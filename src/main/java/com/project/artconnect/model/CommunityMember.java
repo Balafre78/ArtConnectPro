@@ -2,6 +2,7 @@ package com.project.artconnect.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class CommunityMember {
     private String name;
@@ -104,5 +105,21 @@ public class CommunityMember {
     @Override
     public String toString() {
         return name;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof CommunityMember member)) {
+            return false;
+        }
+        return Objects.equals(email, member.email);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(email);
     }
 }

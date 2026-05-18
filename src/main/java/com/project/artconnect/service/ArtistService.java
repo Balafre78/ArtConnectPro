@@ -8,15 +8,15 @@ import java.util.Optional;
 public interface ArtistService {
     List<Artist> getAllArtists();
 
-    Optional<Artist> getArtistByName(String name);
+    Artist getArtistByName(String name);
 
     void createArtist(Artist artist);
 
     void updateArtist(Artist artist);
 
-    void deleteArtist(String name);
+    void deleteArtist(Artist artist);
 
     List<Discipline> getAllDisciplines();
 
-    List<Artist> searchArtists(String query, String disciplineName, String city);
+    List<Artist> searchArtists(String query, String disciplineName);
 }

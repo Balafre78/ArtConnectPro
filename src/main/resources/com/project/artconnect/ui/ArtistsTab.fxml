@@ -10,7 +10,7 @@
     </padding>
     <HBox spacing="10.0" alignment="CENTER_LEFT">
         <TextField fx:id="searchField" promptText="Search artists..." HBox.hgrow="ALWAYS" />
-        <ComboBox fx:id="disciplineFilter" promptText="Filter by Discipline" />
+        <ComboBox fx:id="disciplineFilter" promptText="Filter by discipline"/>
         <Button text="Search" onAction="#handleSearch" />
         <Button text="Reset" onAction="#handleReset" />
     </HBox>
@@ -19,7 +19,14 @@
             <TableColumn fx:id="nameColumn" text="Name" prefWidth="200" />
             <TableColumn fx:id="cityColumn" text="City" prefWidth="150" />
             <TableColumn fx:id="emailColumn" text="Email" prefWidth="200" />
+            <TableColumn fx:id="phoneColumn" text="Phone" prefWidth="200" />
             <TableColumn fx:id="yearColumn" text="Birth Year" prefWidth="100" />
+            <TableColumn fx:id="bioColumn" text="Bio" prefWidth="200" />
         </columns>
     </TableView>
+    <HBox spacing="10.0" alignment="CENTER_RIGHT">
+        <Button text="Add Artist" onAction="#handleAdd" style="-fx-background-color: #4CAF50; -fx-text-fill: white;" />
+        <Button text="Edit Artist" onAction="#handleEdit" style="-fx-background-color: #2196F3; -fx-text-fill: white;" />
+        <Button text="Delete Artist" onAction="#handleDelete" style="-fx-background-color: #f44336; -fx-text-fill: white;" />
+    </HBox>
 </VBox>

@@ -1,6 +1,7 @@
 package com.project.artconnect.model;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 public class Review {
     private CommunityMember reviewer;
@@ -58,5 +59,23 @@ public class Review {
 
     public void setReviewDate(LocalDate reviewDate) {
         this.reviewDate = reviewDate;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Review review)) {
+            return false;
+        }
+        return Objects.equals(reviewer, review.reviewer)
+                && Objects.equals(artwork, review.artwork)
+                && Objects.equals(reviewDate, review.reviewDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(reviewer, artwork, reviewDate);
     }
 }

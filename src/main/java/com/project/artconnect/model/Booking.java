@@ -1,6 +1,7 @@
 package com.project.artconnect.model;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class Booking {
     private Workshop workshop;
@@ -48,5 +49,23 @@ public class Booking {
 
     public void setPaymentStatus(String paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Booking booking)) {
+            return false;
+        }
+        return Objects.equals(workshop, booking.workshop)
+                && Objects.equals(member, booking.member)
+                && Objects.equals(bookingDate, booking.bookingDate);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(workshop, member, bookingDate);
     }
 }

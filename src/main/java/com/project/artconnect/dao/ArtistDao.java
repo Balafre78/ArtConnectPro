@@ -7,13 +7,17 @@ import java.util.List;
  * Data Access Object for Artist entity.
  */
 public interface ArtistDao {
+    Artist findByName(String name);
+
     List<Artist> findAll();
 
     void save(Artist artist);
 
     void update(Artist artist);
 
-    void delete(String artistName);
+    void delete(Artist artist);
+
+    String findId(Artist artist);
 
     List<Artist> findByCity(String city);
 }

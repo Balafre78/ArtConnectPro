@@ -2,6 +2,7 @@ package com.project.artconnect.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Artist entity representing a creator in the community.
@@ -128,7 +129,28 @@ public class Artist {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Artist artist)) {
+            return false;
+        }
+        return name.equals(artist.name)
+                && contactEmail.equals(artist.contactEmail)
+                && city.equals(artist.city)
+                && Objects.equals(birthYear, artist.birthYear)
+                && bio.equals(artist.bio)
+                && phone.equals(artist.phone);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, contactEmail, city, birthYear, bio, phone);
+    }
+
+    @Override
     public String toString() {
-        return name;
+        return name+" "+contactEmail+" "+city+" "+bio+" "+birthYear+" "+phone;
     }
 }
